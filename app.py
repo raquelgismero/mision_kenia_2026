@@ -8,7 +8,7 @@ from pydantic import BaseModel
 warnings.filterwarnings('ignore')
 
 # 1. Configuración de la IA
-client = genai.Client(api_key="API_KEY")
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 # 2. Estructura de datos GLOBAL (Cambiamos 'suajili' por 'palabra_local')
 class Palabra(BaseModel):
