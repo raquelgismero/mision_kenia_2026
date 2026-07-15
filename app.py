@@ -68,7 +68,7 @@ with tab_aprender:
         pais_final = pais
         region_final = st.selectbox(f"¿A qué región de {pais} vas?", destinos_mundiales[pais])
     
-   mision = st.multiselect("Enfoque de tu misión:", ["Trabajo social", "Atención médica", "Educación con niños", "Construcción", "Evangelización", "Otro"])
+   mision = st.multiselect("Enfoque de tu misión:", ["Trabajo Social", "Atención Médica", "Educación con niños", "Construcción", "Evangelización", "Otro"])
     
     # Lógica para si elige "Otro"
     enfoque_final = mision.copy()
