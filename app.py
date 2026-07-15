@@ -41,8 +41,8 @@ with st.sidebar:
     st.write("Si valoras este trabajo y quieres apoyarnos a llevar esperanza (y muchas ganas), ¡toda ayuda suma!")
     
     st.info("¿Nos ayudas con nuestra misión?")
-    st.markdown("[**Conoce el proyecto y haz tu donación aquí**](https://misionkenia.lovable.app/#) 💙")
-    st.markdown("[📸 **Síguenos en Instagram: @to_kenya_4jesus**](https://www.instagram.com/to_kenya_4jesus)")
+    st.markdown("[👉 **Conoce el proyecto y haz tu donación aquí**](https://misionkenia.lovable.app/#) 💙")
+    st.markdown("[📸 **Síguenos en Instagram y conocenos mejor: @to_kenya_4jesus**](https://www.instagram.com/to_kenya_4jesus)")
     st.divider()
     st.caption("Hecho con ❤️ y de la mano de Dios.")
 
