@@ -208,7 +208,7 @@ with tab_aprender:
 
        # --- SECCIÓN DE TUTOR DE VOZ (CHAT) ---
         st.header("Tutor de Voz: Practica con un local")
-        st.write("Mantén una conversación fluida o pregunta dudas. Puedes usar el teclado o el micrófono. 🎙️")
+        st.write("Mantén una conversación fluida o pregunta dudas. Puedes usar el teclado o el micrófono.")
         
         modo_chat = st.radio(
             "Elige cómo quieres que te responda la IA:", 
@@ -238,7 +238,7 @@ with tab_aprender:
         if "ultimo_audio" not in st.session_state:
             st.session_state.ultimo_audio = None
 
-        prompt_audio = st.audio_input("🎤 Envía un mensaje de voz:")
+        prompt_audio = st.audio_input("Envía un mensaje de voz:")
         prompt_texto = st.chat_input("Escribe tu saludo o pregunta aquí...")
 
         # Verificar si hay un audio NUEVO
