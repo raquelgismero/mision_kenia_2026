@@ -161,7 +161,7 @@ with tab_aprender:
                         f"REGLAS CRÍTICAS DE COMPORTAMIENTO:\n"
                         f"1. Tono: Exclusivamente formal, neutro y académico. Sé directo y ve al grano y habla con velocidad x2.\n"
                         f"2. Prohibición de refuerzo emocional: No incluyas comentarios de ánimo ni elogios.\n"
-                        f"3. BREVEDAD EXTREMA: Tus respuestas deben tener un MÁXIMO DE 2 ORACIONES y no superar las 30 palabras. Limítate a dar la traducción directa y la pronunciación figurada. NADA de explicaciones extra ni saludos."
+                        f"3. BREVEDAD EXTREMA: Tus respuestas deben tener un MÁXIMO DE 2 ORACIONES y no superar las 15 palabras. Limítate a dar la traducción directa y la pronunciación figurada. NADA de explicaciones extra ni saludos."
                     
                     )
                     st.session_state.chat_ia = client.chats.create(
