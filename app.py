@@ -259,31 +259,37 @@ with tab_aprender:
                 ]
 
             # 2. Generar y mostrar la respuesta de la IA
+            # 2. Generar y mostrar la respuesta de la IA
             with st.chat_message("assistant"):
-                with st.spinner("Pensando y grabando respuesta..."):
-                    respuesta = st.session_state.chat_ia.send_message(mensaje_para_ia)
-                    texto_ia = respuesta.text
-                    
-                    audio_bytes_ia = None
-                    if "Audio" in modo_chat:
-                        try:
-                            tts_chat = gTTS(text=texto_ia, lang='es') 
-                            fp_chat = io.BytesIO()
-                            tts_chat.write_to_fp(fp_chat)
-                            audio_bytes_ia = fp_chat.getvalue()
-                            st.audio(audio_bytes_ia, format="audio/mp3")
-                        except Exception:
-                            st.caption("Error generando audio en vivo.")
-                    
-                    if "Texto" in modo_chat:
-                        st.write(texto_ia)
-                    
-                    st.session_state.mensajes.append({
-                        "rol": "assistant", 
-                        "tipo": "texto",
-                        "contenido": texto_ia, 
-                        "audio": audio_bytes_ia
-                    })
+                with st.spinner("Pensando y procesando..."):
+                    try:
+                        # Intentamos enviar el mensaje (texto o audio) a Google
+                        respuesta = st.session_state.chat_ia.send_message(mensaje_para_ia)
+                        texto_ia = respuesta.text
+                        
+                        audio_bytes_ia = None
+                        if "Audio" in modo_chat:
+                            try:
+                                tts_chat = gTTS(text=texto_ia, lang='es') 
+                                fp_chat = io.BytesIO()
+                                tts_chat.write_to_fp(fp_chat)
+                                audio_bytes_ia = fp_chat.getvalue()
+                                st.audio(audio_bytes_ia, format="audio/mp3")
+                            except Exception:
+                                st.caption("⚠️ Error generando el audio de respuesta.")
+                        
+                        if "Texto" in modo_chat:
+                            st.write(texto_ia)
+                        
+                        st.session_state.mensajes.append({
+                            "rol": "assistant", 
+                            "tipo": "texto",
+                            "contenido": texto_ia, 
+                            "audio": audio_bytes_ia
+                        })
+                    except Exception as e:
+                        # Si Google da un ServerError 500, mostramos esto en vez de romper la app
+                        st.error("¡Ups! Los servidores de Google no han podido procesar este mensaje. A veces pasa si el audio es muy corto. ¡Prueba a grabar de nuevo o usa el texto!")
 
 # --- PESTAÑAS RESTANTES ---
 with tab_comunidad:
