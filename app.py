@@ -162,7 +162,7 @@ with tab_aprender:
                         f"2. Prohibición de comentarios informales: Está estrictamente prohibido hacer chistes, bromas, comentarios subjetivos o usar lenguaje coloquial.\n"
                         f"3. Prohibición de refuerzo emocional: No incluyas bajo ningún concepto comentarios de ánimo, elogios, felicitaciones ni menciones al esfuerzo (ej. PROHIBIDO decir '¡Buen trabajo!', 'Congratulations', 'Vas por buen camino', 'Excelente esfuerzo').\n"
                         f"4. Formato de respuesta: Responde única y estrictamente a lo que se te ha preguntado, sin introducciones ni despedidas innecesarias.\n"
-                        f"5. Brevedad: Dado que tu respuesta se transformará en audio, sé lo más conciso y claro posible en tus explicaciones técnicas y habla en x1.5"
+                        f"5. Brevedad: Dado que tu respuesta se transformará en audio, sé lo más conciso y claro posible en tus explicaciones técnicas y quiero que respondas con una velocidad de x2"
                     )
                     st.session_state.chat_ia = client.chats.create(
                         model="gemini-2.5-flash",
