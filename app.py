@@ -10,9 +10,12 @@ from gtts import gTTS
 
 warnings.filterwarnings('ignore')
 
-# 1. Configuración de la IA
-client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+# 1. Configuración de la IA (Mantenemos la conexión abierta)
+@st.cache_resource
+def iniciar_cliente_ia():
+    return genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
+client = iniciar_cliente_ia()
 # 2. Estructura de datos GLOBAL
 class Palabra(BaseModel):
     espanol: str
