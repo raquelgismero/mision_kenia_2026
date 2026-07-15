@@ -155,7 +155,7 @@ with tab_aprender:
                     # Inicializar el chat de la IA
                     # Inicializar el chat de la IA con un perfil estrictamente académico y formal
                     instrucciones_chat = (
-                        f"Actúa única y exclusivamente como un profesor de lingüística y tutor académico formal experto en el entorno de {region_final}, {pais_final}. "
+                        f"Actúa única y exclusivamente como un profesor de lingüística y tutor académico formal experto en el entorno de {region_final}, {pais_final}. ASEGURATE DE QUE ESTÁ BIEN LO QUE ME RESPONDAS, ANALIZALO VARIAS VECES. "
                         f"Tu única función es enseñar el idioma {idioma_real} y resolver dudas lingüísticas de forma directa, seria y rigurosa. "
                         f"REGLAS CRÍTICAS DE COMPORTAMIENTO:\n"
                         f"1. Tono: Exclusivamente formal, neutro y académico. Sé directo y ve al grano.\n"
