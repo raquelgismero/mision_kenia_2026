@@ -208,89 +208,99 @@ with tab_aprender:
 
        # --- SECCIÓN DE TUTOR DE VOZ (CHAT) ---
         st.header("Tutor de Voz: Practica con un local")
-        st.write("Mantén una conversación fluida o pregunta dudas. Puedes usar el teclado o el micrófono.")
+        st.write("Mantén una conversación fluida o pregunta dudas. Puedes usar el teclado o el micrófono. 🎙️")
         
-        # Selector de modo de respuesta
         modo_chat = st.radio(
-            "Elige cómo quieres que te responda: ", 
+            "Elige cómo quieres que te responda la IA:", 
             ["Solo Audio (Recomendado)", "Audio y Texto", "Solo Texto"], 
             horizontal=True
         )
 
-        # Mostrar historial de la conversación
-        for msg in st.session_state.mensajes:
-            with st.chat_message(msg["rol"]):
-                if msg["rol"] == "user":
-                    if msg.get("tipo") == "audio":
-                        st.audio(msg["contenido"], format="audio/wav")
-                        st.caption("Mensaje de voz enviado")
+        # 1. Contenedor para el historial (Mantiene todo en orden)
+        contenedor_chat = st.container()
+        
+        # Mostrar historial dentro del contenedor
+        with contenedor_chat:
+            for msg in st.session_state.mensajes:
+                with st.chat_message(msg["rol"]):
+                    if msg["rol"] == "user":
+                        if msg.get("tipo") == "audio":
+                            st.audio(msg["contenido"], format="audio/wav")
+                        else:
+                            st.write(msg["contenido"])
                     else:
-                        st.write(msg["contenido"])
-                else:
-                    if msg.get("audio") and ("Audio" in modo_chat):
-                        st.audio(msg["audio"], format="audio/mp3")
-                    if "Texto" in modo_chat or not msg.get("audio"):
-                        st.write(msg["contenido"])
+                        if msg.get("audio") and ("Audio" in modo_chat):
+                            st.audio(msg["audio"], format="audio/mp3")
+                        if "Texto" in modo_chat or not msg.get("audio"):
+                            st.write(msg["contenido"])
 
-        # Input de Chat o Micrófono (Streamlit detectará el micrófono de tu móvil/PC)
+        # 2. Contenedor para los inputs (Para que estén fijos abajo)
+        if "ultimo_audio" not in st.session_state:
+            st.session_state.ultimo_audio = None
+
+        prompt_audio = st.audio_input("🎤 Envía un mensaje de voz:")
         prompt_texto = st.chat_input("Escribe tu saludo o pregunta aquí...")
-        prompt_audio = st.audio_input(" O si prefieres hablar, envía un mensaje de voz:")
 
-        # Lógica para enviar el mensaje (texto o audio)
-        if prompt_texto or prompt_audio:
+        # Verificar si hay un audio NUEVO
+        nuevo_audio = None
+        if prompt_audio:
+            if prompt_audio.getvalue() != st.session_state.ultimo_audio:
+                nuevo_audio = prompt_audio.getvalue()
+                st.session_state.ultimo_audio = nuevo_audio
+
+        # 3. Procesar nuevos mensajes
+        if prompt_texto or nuevo_audio:
             
-            # 1. Mostrar lo que el usuario envía y guardarlo
-            if prompt_texto:
-                st.session_state.mensajes.append({"rol": "user", "tipo": "texto", "contenido": prompt_texto})
-                with st.chat_message("user"):
-                    st.write(prompt_texto)
-                mensaje_para_ia = prompt_texto
-                
-            elif prompt_audio:
-                audio_bytes_user = prompt_audio.getvalue()
-                st.session_state.mensajes.append({"rol": "user", "tipo": "audio", "contenido": audio_bytes_user})
-                with st.chat_message("user"):
-                    st.audio(audio_bytes_user, format="audio/wav")
-                
-                # Empaquetar el audio para que Gemini pueda escucharlo
-                mensaje_para_ia = [
-                    types.Part.from_bytes(data=audio_bytes_user, mime_type="audio/wav"), 
-                    "Por favor, escucha este audio y respóndeme."
-                ]
+            # ¡CLAVE! Mostramos los mensajes nuevos DENTRO del contenedor del chat
+            with contenedor_chat: 
+                # Mostrar mensaje del usuario
+                if prompt_texto:
+                    st.session_state.mensajes.append({"rol": "user", "tipo": "texto", "contenido": prompt_texto})
+                    with st.chat_message("user"):
+                        st.write(prompt_texto)
+                    mensaje_para_ia = prompt_texto
+                    
+                elif nuevo_audio:
+                    st.session_state.mensajes.append({"rol": "user", "tipo": "audio", "contenido": nuevo_audio})
+                    with st.chat_message("user"):
+                        st.audio(nuevo_audio, format="audio/wav")
+                    mensaje_para_ia = [
+                        types.Part.from_bytes(data=nuevo_audio, mime_type="audio/wav"), 
+                        "Por favor, escucha este audio y respóndeme."
+                    ]
 
-            # 2. Generar y mostrar la respuesta de la IA
-            # 2. Generar y mostrar la respuesta de la IA
-            with st.chat_message("assistant"):
-                with st.spinner("Pensando y procesando..."):
-                    try:
-                        # Intentamos enviar el mensaje (texto o audio) a Google
-                        respuesta = st.session_state.chat_ia.send_message(mensaje_para_ia)
-                        texto_ia = respuesta.text
-                        
-                        audio_bytes_ia = None
-                        if "Audio" in modo_chat:
-                            try:
-                                tts_chat = gTTS(text=texto_ia, lang='es') 
-                                fp_chat = io.BytesIO()
-                                tts_chat.write_to_fp(fp_chat)
-                                audio_bytes_ia = fp_chat.getvalue()
-                                st.audio(audio_bytes_ia, format="audio/mp3")
-                            except Exception:
-                                st.caption("⚠️ Error generando el audio de respuesta.")
-                        
-                        if "Texto" in modo_chat:
-                            st.write(texto_ia)
-                        
-                        st.session_state.mensajes.append({
-                            "rol": "assistant", 
-                            "tipo": "texto",
-                            "contenido": texto_ia, 
-                            "audio": audio_bytes_ia
-                        })
-                    except Exception as e:
-                        # Si Google da un ServerError 500, mostramos esto en vez de romper la app
-                        st.error("¡Ups! Los servidores de Google no han podido procesar este mensaje. A veces pasa si el audio es muy corto. ¡Prueba a grabar de nuevo o usa el texto!")
-
+                # Mostrar respuesta de la IA
+                with st.chat_message("assistant"):
+                    with st.spinner("Pensando y procesando..."):
+                        try:
+                            respuesta = st.session_state.chat_ia.send_message(mensaje_para_ia)
+                            texto_ia = respuesta.text
+                            
+                            # Limpiar asteriscos y guiones bajos para que el audio suene natural
+                            texto_limpio_para_audio = texto_ia.replace("*", "").replace("_", "").replace("#", "")
+                            
+                            audio_bytes_ia = None
+                            if "Audio" in modo_chat:
+                                try:
+                                    tts_chat = gTTS(text=texto_limpio_para_audio, lang='es') 
+                                    fp_chat = io.BytesIO()
+                                    tts_chat.write_to_fp(fp_chat)
+                                    audio_bytes_ia = fp_chat.getvalue()
+                                    st.audio(audio_bytes_ia, format="audio/mp3")
+                                except Exception:
+                                    st.caption("Error generando el audio de respuesta.")
+                            
+                            if "Texto" in modo_chat:
+                                st.write(texto_ia)
+                            
+                            st.session_state.mensajes.append({
+                                "rol": "assistant", 
+                                "tipo": "texto",
+                                "contenido": texto_ia, 
+                                "audio": audio_bytes_ia
+                            })
+                        except Exception as e:
+                            st.error("¡Ups! Los servidores no han podido procesar este mensaje. ¡Prueba de nuevo!")
 # --- PESTAÑAS RESTANTES ---
 with tab_comunidad:
     st.header("Foro de Voluntarios")
