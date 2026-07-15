@@ -153,7 +153,17 @@ with tab_aprender:
                     st.session_state.zip_buffer = zip_buffer.getvalue()
                     
                     # Inicializar el chat de la IA
-                    instrucciones_chat = f"Eres un local muy amable de {region_final}, {pais_final}. Hablas {idioma_real} y español. Vas a ayudar al usuario a practicar el idioma de forma conversacional. IMPORTANTE: Tus respuestas serán convertidas a audio, así que sé conciso, natural y usa frases cortas para que el sintetizador de voz suene fluido."
+                    # Inicializar el chat de la IA con un perfil estrictamente académico y formal
+                    instrucciones_chat = (
+                        f"Actúa única y exclusivamente como un profesor de lingüística y tutor académico formal experto en el entorno de {region_final}, {pais_final}. "
+                        f"Tu única función es enseñar el idioma {idioma_real} y resolver dudas lingüísticas de forma directa, seria y rigurosa. "
+                        f"REGLAS CRÍTICAS DE COMPORTAMIENTO:\n"
+                        f"1. Tono: Exclusivamente formal, neutro y académico. Sé directo y ve al grano.\n"
+                        f"2. Prohibición de comentarios informales: Está estrictamente prohibido hacer chistes, bromas, comentarios subjetivos o usar lenguaje coloquial.\n"
+                        f"3. Prohibición de refuerzo emocional: No incluyas bajo ningún concepto comentarios de ánimo, elogios, felicitaciones ni menciones al esfuerzo (ej. PROHIBIDO decir '¡Buen trabajo!', 'Congratulations', 'Vas por buen camino', 'Excelente esfuerzo').\n"
+                        f"4. Formato de respuesta: Responde única y estrictamente a lo que se te ha preguntado, sin introducciones ni despedidas innecesarias.\n"
+                        f"5. Brevedad: Dado que tu respuesta se transformará en audio, sé lo más conciso y claro posible en tus explicaciones técnicas y habla en x1.5"
+                    )
                     st.session_state.chat_ia = client.chats.create(
                         model="gemini-2.5-flash",
                         config=types.GenerateContentConfig(system_instruction=instrucciones_chat)
