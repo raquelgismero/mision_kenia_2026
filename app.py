@@ -68,9 +68,8 @@ with tab_aprender:
         pais_final = pais
         region_final = st.selectbox(f"¿A qué región de {pais} vas?", destinos_mundiales[pais])
     
-   mision = st.multiselect("Enfoque de tu misión:", ["Trabajo Social", "Atención Médica", "Educación con niños", "Construcción", "Evangelización", "Otro"])
+    mision = st.multiselect("Enfoque de tu misión:", ["Trabajo Social", "Atención Médica", "Educación con niños", "Construcción", "Evangelización", "Otro"])
     
-    # Lógica para si elige "Otro"
     enfoque_final = mision.copy()
     if "Otro" in mision:
         otro_enfoque = st.text_input("Especifica el otro enfoque:")
@@ -78,10 +77,9 @@ with tab_aprender:
             enfoque_final.remove("Otro")
             enfoque_final.append(otro_enfoque)
 
-    # Dos columnas para los días y el tiempo diario
     col1, col2 = st.columns(2)
     with col1:
-        dias = st.number_input("¿Durante cuántos días quieres estudiar?", min_value=1, max_value=60, value=14)
+        dias = st.number_input("¿Durante cuántos días estudiarás?", min_value=1, max_value=60, value=14)
     with col2:
         tiempo_diario = st.selectbox("Tiempo de estudio al día:", ["15 minutos", "30 minutos", "1 hora", "Más de 1 hora"])
     
