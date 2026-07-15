@@ -203,12 +203,13 @@ with tab_aprender:
 
         st.divider()
 
-        # --- SECCIÓN DE TUTOR DE VOZ (CHAT) ---
-        st.header("Practica con un local (Tutor de Voz)")
+       # --- SECCIÓN DE TUTOR DE VOZ (CHAT) ---
+        st.header("Tutor de Voz: Practica con un local")
+        st.write("Mantén una conversación fluida o pregunta dudas. Puedes usar el teclado o el micrófono.")
         
         # Selector de modo de respuesta
         modo_chat = st.radio(
-            "Elige cómo quieres que te responda la IA:", 
+            "Elige cómo quieres que te responda: ", 
             ["Solo Audio (Recomendado)", "Audio y Texto", "Solo Texto"], 
             horizontal=True
         )
@@ -217,48 +218,68 @@ with tab_aprender:
         for msg in st.session_state.mensajes:
             with st.chat_message(msg["rol"]):
                 if msg["rol"] == "user":
-                    st.write(msg["contenido"])
+                    if msg.get("tipo") == "audio":
+                        st.audio(msg["contenido"], format="audio/wav")
+                        st.caption("Mensaje de voz enviado")
+                    else:
+                        st.write(msg["contenido"])
                 else:
                     if msg.get("audio") and ("Audio" in modo_chat):
                         st.audio(msg["audio"], format="audio/mp3")
                     if "Texto" in modo_chat or not msg.get("audio"):
                         st.write(msg["contenido"])
 
-        # Caja de texto para hablar con la IA
-        if prompt_chat := st.chat_input("Escribe tu saludo o pregunta aquí..."):
-            
-            st.session_state.mensajes.append({"rol": "user", "contenido": prompt_chat})
-            with st.chat_message("user"):
-                st.write(prompt_chat)
+        # Input de Chat o Micrófono (Streamlit detectará el micrófono de tu móvil/PC)
+        prompt_texto = st.chat_input("Escribe tu saludo o pregunta aquí...")
+        prompt_audio = st.audio_input(" O si prefieres hablar, envía un mensaje de voz:")
 
+        # Lógica para enviar el mensaje (texto o audio)
+        if prompt_texto or prompt_audio:
+            
+            # 1. Mostrar lo que el usuario envía y guardarlo
+            if prompt_texto:
+                st.session_state.mensajes.append({"rol": "user", "tipo": "texto", "contenido": prompt_texto})
+                with st.chat_message("user"):
+                    st.write(prompt_texto)
+                mensaje_para_ia = prompt_texto
+                
+            elif prompt_audio:
+                audio_bytes_user = prompt_audio.getvalue()
+                st.session_state.mensajes.append({"rol": "user", "tipo": "audio", "contenido": audio_bytes_user})
+                with st.chat_message("user"):
+                    st.audio(audio_bytes_user, format="audio/wav")
+                
+                # Empaquetar el audio para que Gemini pueda escucharlo
+                mensaje_para_ia = [
+                    types.Part.from_bytes(data=audio_bytes_user, mime_type="audio/wav"), 
+                    "Por favor, escucha este audio y respóndeme."
+                ]
+
+            # 2. Generar y mostrar la respuesta de la IA
             with st.chat_message("assistant"):
-                with st.spinner("Pensando y grabando audio..."):
-                    # La IA genera la respuesta
-                    respuesta = st.session_state.chat_ia.send_message(prompt_chat)
+                with st.spinner("Pensando y grabando respuesta..."):
+                    respuesta = st.session_state.chat_ia.send_message(mensaje_para_ia)
                     texto_ia = respuesta.text
                     
-                    audio_bytes = None
-                    # Si el usuario quiere audio, generamos el mp3 de la respuesta
+                    audio_bytes_ia = None
                     if "Audio" in modo_chat:
                         try:
-                            # Usamos español para que entienda bien las explicaciones mixtas
                             tts_chat = gTTS(text=texto_ia, lang='es') 
                             fp_chat = io.BytesIO()
                             tts_chat.write_to_fp(fp_chat)
-                            audio_bytes = fp_chat.getvalue()
-                            st.audio(audio_bytes, format="audio/mp3")
+                            audio_bytes_ia = fp_chat.getvalue()
+                            st.audio(audio_bytes_ia, format="audio/mp3")
                         except Exception:
                             st.caption("Error generando audio en vivo.")
                     
-                    # Si el usuario quiere texto, lo mostramos
                     if "Texto" in modo_chat:
                         st.write(texto_ia)
                     
-                    # Guardamos la respuesta y el audio en la memoria para que no se borre
                     st.session_state.mensajes.append({
                         "rol": "assistant", 
+                        "tipo": "texto",
                         "contenido": texto_ia, 
-                        "audio": audio_bytes
+                        "audio": audio_bytes_ia
                     })
 
 # --- PESTAÑAS RESTANTES ---
