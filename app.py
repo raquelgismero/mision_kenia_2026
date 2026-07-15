@@ -4,26 +4,29 @@ import json
 from google import genai
 from google.genai import types
 from pydantic import BaseModel
+from gtts import gTTS
+import io
 
 warnings.filterwarnings('ignore')
 
 # 1. Configuración de la IA
 client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
-# 2. Estructura de datos GLOBAL (Cambiamos 'suajili' por 'palabra_local')
+# 2. Estructura de datos GLOBAL (Mejorada según tus peticiones)
 class Palabra(BaseModel):
     palabra_local: str
     pronunciacion_figurada: str
     espanol: str
-    contexto_cultural: str
+    ejemplo_uso: str # Cambiado: Antes era contexto_cultural
 
-class Modulo(BaseModel):
+class Dia(BaseModel): # Cambiado: Antes era Modulo
     titulo: str
     descripcion: str
     vocabulario: list[Palabra]
 
 class Temario(BaseModel):
-    modulos: list[Modulo]
+    idioma_detectado: str # Añadido: Para que la IA nos diga exactamente qué idioma es
+    dias: list[Dia] # Cambiado: Lista de días en vez de módulos
 
 # 3. Configuración visual de la web
 st.set_page_config(page_title="Vocabulario de Misión", page_icon="🌍", layout="centered")
@@ -35,15 +38,13 @@ st.markdown("*«Tenía entonces toda la tierra una sola lengua y unas mismas pal
 # --- BARRA LATERAL (SIDEBAR): AUTORÍA Y DONACIONES ---
 with st.sidebar:
     st.header("🙌 Sobre este proyecto")
-    st.write("Esta herramienta ha sido desarrollada con mucho cariño por **Raquel**  y un grupo de voluntarios que nos vamos de misión a Kenia este verano.")
+    st.write("Esta herramienta ha sido desarrollada con mucho cariño por **Raquel** y un grupo de voluntarios que nos vamos de misión a Kenia este verano.")
     
     st.write("Si valoras este trabajo y quieres apoyarnos a llevar esperanza (y muchas ganas), ¡toda ayuda suma!")
     
-    # Recuadro destacado para la donación y la web
     st.info("¿Nos ayudas con nuestra misión?")
     st.markdown("[👉 **Conoce el proyecto y haz tu donación aquí**](https://misionkenia.lovable.app/#) 💙")
     
-    # Enlace a Instagram
     st.markdown("[📸 **Síguenos en Instagram y conócenos mejor: @to_kenya_4jesus**](https://www.instagram.com/to_kenya_4jesus)")
     
     st.divider()
@@ -55,7 +56,6 @@ tab_aprender, tab_comunidad, tab_viaje = st.tabs(["📚 Aprender", "💬 Comunid
 with tab_aprender:
     st.header("Diseña tu temario de Misión")
     
-    # Base de datos simulada de países y regiones para el desplegable
     destinos_mundiales = {
         "Kenia": ["Huruma", "Zona Desértica", "Nairobi", "Otra"],
         "Filipinas": ["Manila", "Cebú", "Mindanao", "Otra"],
@@ -64,7 +64,6 @@ with tab_aprender:
         "Otro País": ["Especificar ciudad o región..."]
     }
     
-    # Lógica condicional: El usuario elige país, y la web adapta el segundo desplegable
     pais = st.selectbox("¿A qué país vas de misión?", list(destinos_mundiales.keys()))
     
     if pais == "Otro País":
@@ -83,7 +82,7 @@ with tab_aprender:
         else:
             with st.spinner(f"Contactando con comunidades en {region_final} ({pais_final})..."):
                 
-                # Prompt Dinámico GLOBAL
+                # Prompt Dinámico GLOBAL actualizado
                 prompt = f"""
                 Actúa como un lingüista y cooperante experto internacional. 
                 Genera un temario de supervivencia del idioma o dialecto local más hablado para voluntarios hispanohablantes.
@@ -92,8 +91,10 @@ with tab_aprender:
                 Duración de estudio: {dias} días.
 
                 Instrucción especial:
-                Detecta cuál es el idioma principal necesario en esa región específica.
-                Para cada palabra en 'palabra_local', incluye una 'pronunciacion_figurada' que indique cómo debe leerlo un español de forma fonética.
+                1. Detecta cuál es el idioma principal necesario (ej. Suajili, Tagalo) y devuélvelo en 'idioma_detectado'.
+                2. Estructura el temario en {dias} días (usa la palabra 'Día', nunca 'Módulo').
+                3. Para 'pronunciacion_figurada', indica cómo debe leerlo un español de forma fonética.
+                4. Para 'ejemplo_uso', proporciona una frase de ejemplo o la respuesta esperada en una conversación real.
                 """
                 
                 try:
@@ -107,41 +108,57 @@ with tab_aprender:
                     )
                     
                     datos = json.loads(response.text)
-                    st.success("¡Temario generado con éxito! 🥳")
+                    idioma_real = datos.get("idioma_detectado", "Idioma Local")
                     
-                    for modulo in datos["modulos"]:
-                        st.subheader(modulo["titulo"])
-                        st.write(modulo["descripcion"])
+                    st.success(f"¡Temario generado con éxito! 🥳 Vamos a aprender **{idioma_real}**")
+                    
+                    for dia in datos["dias"]:
+                        st.subheader(dia["titulo"])
+                        st.write(dia["descripcion"])
                         
-                        tabla = []
-                        for pal in modulo["vocabulario"]:
-                            tabla.append({
-                                "Idioma Local": pal["palabra_local"],
-                                "Pronunciación": pal["pronunciacion_figurada"],
-                                "Español": pal["espanol"],
-                                "Contexto": pal["contexto_cultural"]
-                            })
+                        # --- NUEVO DISEÑO ESTILO DUOLINGO ---
+                        for pal in dia["vocabulario"]:
+                            with st.container(border=True): # Crea una caja bonita para cada palabra
+                                cols = st.columns([3, 1]) # Divide la caja en texto a la izq y audio a la der
+                                with cols[0]:
+                                    st.markdown(f"### 🌍 **{pal['palabra_local']}**  →  {pal['espanol']}")
+                                    st.write(f"🗣️ **Se pronuncia:** `{pal['pronunciacion_figurada']}`")
+                                    st.write(f"💡 **Ejemplo / Respuesta:** {pal['ejemplo_uso']}")
+                                with cols[1]:
+                                    try:
+                                        # Lógica sencilla para que el audio suene en el idioma correcto
+                                        lang_code = 'en' # Por defecto usa fonética inglesa
+                                        if 'suajili' in idioma_real.lower() or 'swahili' in idioma_real.lower(): lang_code = 'sw'
+                                        elif 'filipino' in idioma_real.lower() or 'tagalo' in idioma_real.lower(): lang_code = 'tl'
+                                        elif 'hindi' in idioma_real.lower(): lang_code = 'hi'
+                                        
+                                        # Genera el audio
+                                        tts = gTTS(text=pal['palabra_local'], lang=lang_code)
+                                        fp = io.BytesIO()
+                                        tts.write_to_fp(fp)
+                                        st.audio(fp, format='audio/mp3')
+                                    except Exception:
+                                        st.caption("Audio no disponible")
                         
-                        st.dataframe(tabla, use_container_width=True)
                         st.divider() 
-			# --- NUEVO: BOTÓN DE DESCARGA OFFLINE ---
-                    # 1. Preparamos el texto a descargar
+
+                    # --- BOTÓN DE DESCARGA OFFLINE ACTUALIZADO ---
                     texto_descarga = f"TEMARIO DE MISIÓN: {region_final}, {pais_final}\n"
+                    texto_descarga += f"IDIOMA: {idioma_real}\n"
                     texto_descarga += "="*50 + "\n\n"
                     
-                    for modulo in datos["modulos"]:
-                        texto_descarga += f"MÓDULO: {modulo['titulo']}\n"
-                        texto_descarga += f"{modulo['descripcion']}\n\n"
-                        for pal in modulo["vocabulario"]:
-                            texto_descarga += f"- {pal['palabra_local']} (Se pronuncia: {pal['pronunciacion_figurada']}) -> {pal['espanol']}\n"
-                            texto_descarga += f"  Contexto: {pal['contexto_cultural']}\n\n"
+                    for dia in datos["dias"]:
+                        texto_descarga += f"{dia['titulo'].upper()}\n"
+                        texto_descarga += f"{dia['descripcion']}\n\n"
+                        for pal in dia["vocabulario"]:
+                            texto_descarga += f"- {pal['palabra_local']} (Pronunciación: {pal['pronunciacion_figurada']}) -> {pal['espanol']}\n"
+                            texto_descarga += f"  Ejemplo: {pal['ejemplo_uso']}\n\n"
                         texto_descarga += "-"*50 + "\n\n"
                     
-                    # 2. Creamos el botón mágico de Streamlit
                     st.download_button(
                         label="⬇️ Descargar Temario (Modo Offline)",
                         data=texto_descarga,
-                        file_name=f"Temario_Misiones_{region_final.replace(' ', '_')}.txt",
+                        file_name=f"Temario_{idioma_real.replace(' ', '_')}_{region_final.replace(' ', '_')}.txt",
                         mime="text/plain"
                     )
                         
