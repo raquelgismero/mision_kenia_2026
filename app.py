@@ -165,7 +165,7 @@ with tab_aprender:
         st.success(f"¡Listo! Vamos a aprender **{st.session_state.idioma_real.upper()}**")
         
         st.download_button(
-            label="Descargar Temario y Audios (Modo Offline)",
+            label="Descargar temario y audios (offline)",
             data=st.session_state.zip_buffer,
             file_name=f"Temario_{st.session_state.idioma_real}.zip",
             mime="application/zip"
