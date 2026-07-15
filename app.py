@@ -110,7 +110,7 @@ with tab_aprender:
                 
                 try:
                     response = client.models.generate_content(
-                        model='gemini-2.0-flash',
+                        model='gemini-2.5-flash-lite'
                         contents=prompt,
                         config=types.GenerateContentConfig(
                             response_mime_type="application/json",
@@ -165,7 +165,7 @@ with tab_aprender:
                     
                     )
                     st.session_state.chat_ia = client.chats.create(
-                        model="gemini-2.0-flash",
+                        model="gemini-2.5-flash-lite",
                         config=types.GenerateContentConfig(system_instruction=instrucciones_chat)
                     )
                     st.session_state.mensajes = []
