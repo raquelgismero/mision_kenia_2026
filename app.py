@@ -154,15 +154,15 @@ with tab_aprender:
                     
                     # Inicializar el chat de la IA
                     # Inicializar el chat de la IA con un perfil estrictamente académico y formal
+                     # Inicializar el chat de la IA con un perfil estrictamente académico y formal
                     instrucciones_chat = (
-                        f"Actúa única y exclusivamente como un profesor de lingüística y tutor académico formal experto en el entorno de {region_final}, {pais_final}. ASEGURATE DE QUE ESTÁ BIEN LO QUE ME RESPONDAS, ANALIZALO VARIAS VECES. "
+                        f"Actúa única y exclusivamente como un profesor de lingüística y tutor académico formal experto en el entorno de {region_final}, {pais_final}. "
                         f"Tu única función es enseñar el idioma {idioma_real} y resolver dudas lingüísticas de forma directa, seria y rigurosa. "
                         f"REGLAS CRÍTICAS DE COMPORTAMIENTO:\n"
-                        f"1. Tono: Exclusivamente formal, neutro y académico. Sé directo y ve al grano.\n"
-                        f"2. Prohibición de comentarios informales: Está estrictamente prohibido hacer chistes, bromas, comentarios subjetivos o usar lenguaje coloquial.\n"
-                        f"3. Prohibición de refuerzo emocional: No incluyas bajo ningún concepto comentarios de ánimo, elogios, felicitaciones ni menciones al esfuerzo (ej. PROHIBIDO decir '¡Buen trabajo!', 'Congratulations', 'Vas por buen camino', 'Excelente esfuerzo').\n"
-                        f"4. Formato de respuesta: Responde única y estrictamente a lo que se te ha preguntado, sin introducciones ni despedidas innecesarias.\n"
-                        f"5. Brevedad: Dado que tu respuesta se transformará en audio, sé lo más conciso y claro posible en tus explicaciones técnicas y quiero que respondas con una velocidad de x2"
+                        f"1. Tono: Exclusivamente formal, neutro y académico. Sé directo y ve al grano y habla con velocidad x2.\n"
+                        f"2. Prohibición de refuerzo emocional: No incluyas comentarios de ánimo ni elogios.\n"
+                        f"3. BREVEDAD EXTREMA: Tus respuestas deben tener un MÁXIMO DE 2 ORACIONES y no superar las 30 palabras. Limítate a dar la traducción directa y la pronunciación figurada. NADA de explicaciones extra ni saludos."
+                    
                     )
                     st.session_state.chat_ia = client.chats.create(
                         model="gemini-2.5-flash",
@@ -247,8 +247,12 @@ with tab_aprender:
         # 2. Contenedor para los inputs (Para que estén fijos abajo)
         if "ultimo_audio" not in st.session_state:
             st.session_state.ultimo_audio = None
+        # Nueva variable para reiniciar el micrófono
+        if "audio_key" not in st.session_state:
+            st.session_state.audio_key = 0
 
-        prompt_audio = st.audio_input("Envía un mensaje de voz:")
+        # Le damos una "llave" que cambiaremos para resetearlo
+        prompt_audio = st.audio_input("Envía un mensaje de voz:", key=f"audio_{st.session_state.audio_key}")
         prompt_texto = st.chat_input("Escribe tu saludo o pregunta aquí...")
 
         # Verificar si hay un audio NUEVO
@@ -257,6 +261,63 @@ with tab_aprender:
             if prompt_audio.getvalue() != st.session_state.ultimo_audio:
                 nuevo_audio = prompt_audio.getvalue()
                 st.session_state.ultimo_audio = nuevo_audio
+
+        # 3. Procesar nuevos mensajes
+        if prompt_texto or nuevo_audio:
+            with contenedor_chat: 
+                # Mostrar mensaje del usuario
+                if prompt_texto:
+                    st.session_state.mensajes.append({"rol": "user", "tipo": "texto", "contenido": prompt_texto})
+                    with st.chat_message("user"):
+                        st.write(prompt_texto)
+                    mensaje_para_ia = prompt_texto
+                    
+                elif nuevo_audio:
+                    st.session_state.mensajes.append({"rol": "user", "tipo": "audio", "contenido": nuevo_audio})
+                    with st.chat_message("user"):
+                        st.audio(nuevo_audio, format="audio/wav")
+                    mensaje_para_ia = [
+                        types.Part.from_bytes(data=nuevo_audio, mime_type="audio/wav"), 
+                        "Por favor, escucha este audio y respóndeme."
+                    ]
+
+                # Mostrar respuesta de la IA
+                with st.chat_message("assistant"):
+                    with st.spinner("Pensando y procesando..."):
+                        try:
+                            respuesta = st.session_state.chat_ia.send_message(mensaje_para_ia)
+                            texto_ia = respuesta.text
+                            
+                            # Limpiamos asteriscos para el audio
+                            texto_limpio_para_audio = texto_ia.replace("*", "").replace("_", "").replace("#", "")
+                            
+                            audio_bytes_ia = None
+                            if "Audio" in modo_chat:
+                                try:
+                                    tts_chat = gTTS(text=texto_limpio_para_audio, lang='es') 
+                                    fp_chat = io.BytesIO()
+                                    tts_chat.write_to_fp(fp_chat)
+                                    audio_bytes_ia = fp_chat.getvalue()
+                                    st.audio(audio_bytes_ia, format="audio/mp3")
+                                except Exception:
+                                    st.caption(" Error generando el audio de respuesta.")
+                            
+                            if "Texto" in modo_chat:
+                                st.write(texto_ia)
+                            
+                            st.session_state.mensajes.append({
+                                "rol": "assistant", 
+                                "tipo": "texto",
+                                "contenido": texto_ia, 
+                                "audio": audio_bytes_ia
+                            })
+                        except Exception as e:
+                            st.error("¡Ups! Los servidores de Google no han podido procesar este mensaje. ¡Prueba de nuevo!")
+            
+            # MAGIA PARA LIMPIAR EL MICRÓFONO:
+            if nuevo_audio:
+                st.session_state.audio_key += 1 # Cambiamos la llave
+                st.rerun() # Forzamos a la web a actualizarse al instante limpiando la caja
 
         # 3. Procesar nuevos mensajes
         if prompt_texto or nuevo_audio:
