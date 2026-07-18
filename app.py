@@ -38,36 +38,37 @@ st.set_page_config(page_title="Vocabulario de Misión", page_icon="🌍", layout
 # --- CONFIGURACIÓN DEL FONDO DE PANTALLA ---
 
  # --- CONFIGURACIÓN DEL FONDO DE PANTALLA ---
+# --- CONFIGURACIÓN DEL FONDO DE PANTALLA ---
 def poner_fondo(imagen_path):
     try:
         with open(imagen_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode()
         
-        # Inyectamos CSS para que la imagen sea una marca de agua muy suave
+        # Inyectamos CSS atacando al contenedor principal
         css = f"""
         <style>
-        .stApp::before {{
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/jpeg;base64,{encoded_string}");
+        /* El contenedor principal de la web */
+        [data-testid="stAppViewContainer"] {{
+            /* El rgba(15, 15, 15, 0.85) crea un "cristal ahumado" sobre tu imagen para que sea sutil */
+            background-image: linear-gradient(rgba(15, 15, 15, 0.85), rgba(15, 15, 15, 0.85)), url("data:image/jpeg;base64,{encoded_string}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
-            opacity: 0.15; /* <-- TRUCO: 0.15 significa 15% de visibilidad. Cámbialo a 0.10 si lo quieres aún más claro */
-            z-index: -1;
+        }}
+        
+        /* Hacemos transparente la barra superior para que no corte la imagen */
+        [data-testid="stHeader"] {{
+            background-color: transparent;
         }}
         </style>
         """
         st.markdown(css, unsafe_allow_html=True)
     except Exception as e:
-        st.warning(f"No se pudo cargar la imagen de fondo: {e}")
+        st.warning(f"No se pudo cargar la imagen: {e}")
 
 # Llamamos a la función con el nombre de tu imagen
 poner_fondo("fondo.jpg") 
+# -------------------------------------------
 # ------------------------------------------- 
 # -------------------------------------------
 
@@ -198,7 +199,7 @@ with tab_aprender:
                         f"REGLAS CRÍTICAS DE COMPORTAMIENTO:\n"
                         f"1. Tono: Exclusivamente formal, neutro y académico. Sé directo y ve al grano y habla con velocidad x2.\n"
                         f"2. Prohibición de refuerzo emocional: No incluyas comentarios de ánimo ni elogios.\n"
-                        f"3. BREVEDAD EXTREMA: Tus respuestas deben tener un MÁXIMO DE 2 ORACIONES y no superar las 10 palabras. Limítate a dar la traducción directa y la pronunciación figurada. NADA de explicaciones extra ni saludos."
+                        f"3. BREVEDAD: Tus respuestas deben tener un MÁXIMO DE 2 ORACIONES y no superar las 10 palabras. Limítate a dar la traducción directa y la pronunciación figurada. NADA de explicaciones extra ni saludos."
                     
                     )
                     st.session_state.chat_ia = client.chats.create(
