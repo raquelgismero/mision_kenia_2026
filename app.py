@@ -353,10 +353,11 @@ with tab_aprender:
                             st.error("¡Ups! Los servidores de Google no han podido procesar este mensaje. ¡Prueba de nuevo!")
             
             # MAGIA PARA LIMPIAR EL MICRÓFONO:
+            # MAGIA PARA LIMPIAR LA MEMORIA:
             if nuevo_audio:
-                st.session_state.audio_key += 1 # Cambiamos la llave
-                st.rerun() # Forzamos a la web a actualizarse al instante limpiando la caja
-
+                st.session_state.audio_key += 1
+            
+            st.rerun() # <-- ¡CLAVE! Al moverlo aquí, actúa tanto si mandas audio como texto
         # 3. Procesar nuevos mensajes
         if prompt_texto or nuevo_audio:
             
