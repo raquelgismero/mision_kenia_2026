@@ -3,6 +3,7 @@ import warnings
 import json
 import zipfile
 import io
+import base64
 from google import genai
 from google.genai import types
 from pydantic import BaseModel
@@ -33,6 +34,43 @@ class Temario(BaseModel):
 
 # 3. Configuración visual
 st.set_page_config(page_title="Vocabulario de Misión", page_icon="🌍", layout="centered")
+
+# --- CONFIGURACIÓN DEL FONDO DE PANTALLA ---
+def poner_fondo(imagen_path):
+    try:
+        with open(imagen_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode()
+        
+        # Inyectamos CSS personalizado para el fondo
+        css = f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/jpeg;base64,{encoded_string}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }}
+        
+        /* Capa oscura semitransparente para que el texto siga siendo legible */
+        .stApp::before {{
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 15, 15, 0.7); /* Ajusta el 0.7 si lo quieres más claro o más oscuro */
+            z-index: -1;
+        }}
+        </style>
+        """
+        st.markdown(css, unsafe_allow_html=True)
+    except Exception as e:
+        st.warning(f"No se pudo cargar la imagen de fondo: {e}")
+
+# Llamamos a la función con el nombre de tu imagen
+poner_fondo("fondo.jpg") 
+# -------------------------------------------
 
 st.title("✝️ En misión con Cristo")
 st.markdown("*«Tenía entonces toda la tierra una sola lengua y unas mismas palabras.»* — Génesis 11:1")
