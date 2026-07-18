@@ -36,22 +36,16 @@ class Temario(BaseModel):
 st.set_page_config(page_title="Vocabulario de Misión", page_icon="🌍", layout="centered")
 
 # --- CONFIGURACIÓN DEL FONDO DE PANTALLA ---
+
+ # --- CONFIGURACIÓN DEL FONDO DE PANTALLA ---
 def poner_fondo(imagen_path):
     try:
         with open(imagen_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode()
         
-        # Inyectamos CSS personalizado para el fondo
+        # Inyectamos CSS para que la imagen sea una marca de agua muy suave
         css = f"""
         <style>
-        .stApp {{
-            background-image: url("data:image/jpeg;base64,{encoded_string}");
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }}
-        
-        /* Capa oscura semitransparente para que el texto siga siendo legible */
         .stApp::before {{
             content: "";
             position: absolute;
@@ -59,7 +53,11 @@ def poner_fondo(imagen_path):
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(15, 15, 15, 0.7); /* Ajusta el 0.7 si lo quieres más claro o más oscuro */
+            background-image: url("data:image/jpeg;base64,{encoded_string}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            opacity: 0.15; /* <-- TRUCO: 0.15 significa 15% de visibilidad. Cámbialo a 0.10 si lo quieres aún más claro */
             z-index: -1;
         }}
         </style>
@@ -70,6 +68,7 @@ def poner_fondo(imagen_path):
 
 # Llamamos a la función con el nombre de tu imagen
 poner_fondo("fondo.jpg") 
+# ------------------------------------------- 
 # -------------------------------------------
 
 st.title("✝️ En misión con Cristo")
